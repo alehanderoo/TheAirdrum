@@ -7,13 +7,13 @@ import re
 # https://linux.die.net/man/8/i2cdetect
 
 
-#def newPanel():
+def newPanel():
 	# only scan on adress 00
-#	p = subprocess.Popen(['i2cdetect','-a','-y','1','00','00'],stdout=subprocess.PIPE,)
+	p = subprocess.Popen(['i2cdetect','-a','-y','1','00','00'],stdout=subprocess.PIPE,)
 
-#	return True
+	return True
 
-#	return False
+	return False
 
 def i2cAdrrLst():
 	# Transform i2c devices stdout response to a single addresses list
