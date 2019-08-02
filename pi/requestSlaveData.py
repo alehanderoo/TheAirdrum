@@ -12,8 +12,7 @@ check = True
 
 while 1:
 	t.tic()
-
-	#check = newPanel()
+	
 	# Check all available addresses
 	if check:
 		t.tic()
