@@ -2,9 +2,27 @@ import os
 import subprocess
 import time
 import re
+from smbus2 import SMBusWrapper
 
 # Detect adresses on all adresses(-a), disable interactive(-y), i2c bus 1, from FIRST to LAST addr
 # https://linux.die.net/man/8/i2cdetect
+
+def panelData(i2cAvail):
+	pData = []
+	for addr in i2cAvail:		#TODO arrange i2cAddrs from left to right panel in list
+		try:
+			with SMBusWrapper(1) as bus:
+				#                           (adrr, register, length)
+				data = bus.read_i2c_block_data(addr, 0, 1)
+				if data[0] < 255:
+					pData.append(data[0])
+				else:
+					pData.append('0')
+		except:
+			pData.append('0')
+			print(' Oops! Error')
+
+	return pData
 
 def i2cAdrrLst():
 	# Transform i2c devices stdout response to a single addresses list

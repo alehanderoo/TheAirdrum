@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from time import sleep
-from smbus2 import SMBusWrapper
+from sound_handler import playHandData
+
 from i2cDetect import *
 import time
 
@@ -12,7 +12,7 @@ check = True
 
 while 1:
 	t.tic()
-	
+
 	# Check all available addresses
 	if check:
 		t.tic()
@@ -41,24 +41,17 @@ while 1:
 		i2cAvail = list(set(newAddrs) - set(diff)) #[x for x in newAddrs if (diff in newAddrs)] # and state == True
 	else: 
 		i2cAvail = newAddrs
-
 	print ("AVAI\t\t", i2cAvail)
 	
-	pData = []
-	for addr in i2cAvail:		#TODO arrange i2cAddrs from left to right panel in list
-		try:
-			with SMBusWrapper(1) as bus:
-				#                           (adrr, register, length)
-				data = bus.read_i2c_block_data(addr, 0, 1) 
-				pData.append(data[0])
-		except:
-			pData.append('-')
-			print(' Oops! Error')
-	
+
+	pData = panelData(i2cAvail)
 	print ("DATA:\t\t",pData)
+	if pData:
+		playHandData(pData)
+
+	oldAddrs = i2cAvail
 	print ('')
 
-	oldAddrs = i2cAvail	
 	#.toc()
 	# Decreasing delay may create more transmission errors.
-	sleep(0.1)
+	time.sleep(0.1)

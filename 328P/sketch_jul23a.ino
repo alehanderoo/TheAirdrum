@@ -1,8 +1,14 @@
 #include <Wire.h>
 #include <Adafruit_NeoPixel.h>
+#include <Tone.h>
 
-#define LED_PIN 10
-#define LED_CNT 8
+#define LED_PIN     10
+#define LED_CNT     8
+#define A_in        3
+#define TxPin       11
+#define EN_5V       2
+
+Tone TxLed;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_CNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -31,11 +37,19 @@ void setup() {
   Serial.println("Starting...");
 
   // start led's
+  pinMode(EN_5V, OUTPUT);       // 5V BUCK Pin
+  digitalWrite(EN_5V, HIGH);    // 5V BUCK Enable
   strip.begin();
   strip.show();
 
+  // Begin IR transmitting
+  pinMode(TxPin, OUTPUT);       // IR transmitting LED pin
+  TxLed.begin(TxPin);
+
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
+
+  
 }
 
 void loop() {
@@ -53,7 +67,6 @@ void loop() {
       i2c_adr8 = i2c_adr; // compiler wants 8 bits...
       // Start listening on this address
       Wire.begin(i2c_adr8);
-      //Wire.write(255, 1);   //request to join
       Wire.onRequest(request_event);
       Wire.onReceive(receive_event);
       // feedback
@@ -76,7 +89,7 @@ void loop() {
         digitalWrite(LED_BUILTIN, LOW);
       } 
       // Wait for 50msec before trying a new address. i2cdetect on Pi still busy scanning
-      else if (millis() - start_millis > 50 && data_received == true) {
+      else if (data_received == true && millis() - start_millis > 50 ) {
         fsm = s_init;
         Serial.println("Address already used, retrying");
       }
@@ -86,11 +99,11 @@ void loop() {
       // Run the application
     case s_app:
       // get the hand value from the adc (8 bits instead of 10)
-      hand_value = 160;
-      //analogRead(3) >> 2;
+      hand_value = analogRead(A_in) >> 2;
       // new color given through i2c?
       if (i2c_cntr == 255) {
-        system_color = strip.Color(i2c_buf[0], i2c_buf[1], i2c_buf[2]);
+        system_color = strip.Color(200, 10, 100);
+        //system_color = strip.Color(i2c_buf[0], i2c_buf[1], i2c_buf[2]);
         i2c_cntr = 0;
       }
       // update the LED's every 30ms
@@ -104,8 +117,12 @@ void loop() {
 }
 
 void request_event() {
+  // enable IR transmitting
+  TxLed.play(25000);    //(32768);
   //Set the buffer up to send all 14 bytes of data
   Wire.write(&hand_value, 1);
+  // disable IR transmitting
+  TxLed.stop();
 }
 
 void receive_event(int len) {
